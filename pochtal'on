@@ -1,0 +1,291 @@
+from flask import Flask, request
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
+
+
+app = Flask(__name__)
+
+
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    global user_state_update, data, session_state
+
+    data = request.get_json()
+    user_state_update = data['state']['user']
+    session_state = data['state']['session']
+
+
+    # Проверяем, что запрос пришел от Алисы
+    response_text = dialog_manager(session_state)
+
+
+    response = {'version': data['version'],
+                'session': data['session'],
+                'response': {'text' : response_text, 'end_session': False},
+                "user_state_update": user_state_update,
+                "session_state": session_state}
+
+    return response
+
+def dialog_manager(session_state):
+    user_message = data['request']['command'].lower()
+    if user_message in ['нет', 'не отправляй', 'алиса остановись', 'остановись', 'алиса стоп', 'стоп', 'алиса назад', 'назад', 'алиса перестань', 'перестань', 'алиса сначала', 'сначала']:
+        return clear_session_state()
+
+    elif 'send_mail' in  session_state and 'send_letter' in session_state['send_mail'] and ('прочитать' in user_message or 'прочти' in user_message or 'что получилось' in user_message):
+        return f'Получатель: {session_state["send_mail"]["recipient"]} \n\n' \
+               f'Тема: {session_state["send_mail"]["subject"]} \n\n' \
+               f'Текст: {session_state["send_mail"]["body"]}'
+    elif 'change_mail' in session_state:
+        if session_state['change_mail'] == 'thema':
+            return change_mail('change_thema')
+        if session_state['change_mail'] == 'body':
+            return change_mail('change_body')
+        if session_state['change_mail'] == 'recipient':
+            return change_mail('change_recipient')
+
+    elif user_message == 'изменить тему':
+        return change_mail('thema')
+    elif user_message == 'изменить текст':
+        return change_mail('body')
+    elif user_message == 'изменить получателя':
+        return change_mail('recipient')
+
+    elif 'bind_email' in session_state:
+        if 'email_input' in session_state['bind_email'] and session_state['bind_email']['email_input'] == 1:
+            return bind_mail()
+        if 'password_input' in session_state['bind_email'] and session_state['bind_email']['password_input'] == 1:
+           return bind_mail()
+
+    elif 'send_mail' in session_state:
+        if 'recipient' in session_state['send_mail'] and session_state['send_mail']['recipient'] == 1:
+           return send_mail()
+        if 'subject' in session_state['send_mail'] and session_state['send_mail']['subject'] == 1:
+           return send_mail()
+        if 'body' in session_state['send_mail'] and session_state['send_mail']['body'] == 1:
+           return send_mail()
+        if 'send_letter' in session_state['send_mail']:
+            return send_mail()
+
+    elif 'send_email' in session_state and session_state['send_email']:
+        return send_mail()
+
+    else:
+       return handle_request(data)
+
+
+def handle_request(request_data):
+    user_message = request_data['request']['command'].lower()
+
+    if user_message == "":
+        return welcome_message()
+    elif user_message == "очистить данные почты":
+        return clear_user_state()
+    elif user_message == 'привязать почту':
+        return bind_mail()
+    elif user_message == 'отправить письмо':
+        return send_mail()
+    elif user_message == 'инструкция':
+        return instruction()
+    else:
+        return unknown_command()
+
+
+def welcome_message():
+    response_text = """Приветствую! Я Почтальон, помогаю отправлять письма от вашей Яндекс Почты. 
+    Чтобы начать работу, скажите Привязать почту, если вы это уже сделали скажите Отправить письмо"""
+    session_state = {}
+    return response_text
+
+def instruction():
+    response_text = "Настройка почты:" \
+                    "Так как мы отправляем письма через ящик Яндекса, перед тем как начать необходимо проверить настройки." \
+                    "Первым делом, необходимо проверить, включен ли в ящике IMAP (без него SMTP работать не будет по соображениям безопасности)" \
+                    "Для этого перейдите по сылке https://mail.yandex.ru/?uid=1090168451#setup/client , поставьте галочку на IMAP и сохраните изменения." \
+                    "Также рекомендуем создать отдельный пароль для почты яндекс чтобы не сообщать сторонним сервисам ваш общий пароль на Яндексе" \
+                    "Подробнее об этом по сылке - https://id.yandex.ru/security - пролистайте в самый низ, и нажмите на 'Пароли приложений'"
+
+    return response_text
+def clear_user_state():
+    user_state_update['email'] = None
+    user_state_update['password'] = None
+
+    return 'Авторизационные данные успешно очищены'
+
+def clear_session_state():
+    if 'send_mail' in session_state:
+        del session_state['send_mail']
+    if 'send_email' in session_state:
+        del session_state['send_email']
+    return welcome_message()
+
+def bind_mail():
+        if 'email' not in user_state_update and 'bind_email' not in session_state:
+            response_text = "Напиши свой email"
+            session_state['bind_email'] = {}
+            session_state['bind_email']['email_input'] = 1
+        elif 'password' not in user_state_update and 'bind_email' in session_state and 'password_input' not in session_state['bind_email'] :
+            session_state['bind_email']['email_input'] = None
+            user_state_update['email'] = data['request']["original_utterance"]
+            response_text = "Адресс получен, ведите пароль"
+            session_state['bind_email']['password_input'] = 1
+        else:
+            if user_state_update['email'] and user_state_update['password']:
+                return f'Аккаунт уже привязан: email: {user_state_update["email"]},' \
+                       f'если имеются какие-то проблемы с данными почты, скажите "Очистить данные почты",' \
+                       f'а после заново привяжите почту'
+            session_state['bind_email']['password_input'] = None
+            user_state_update['password'] = data['request']["original_utterance"]
+            email = user_state_update['email']
+            password = user_state_update['password']
+
+            if len(email) < 9 or '@yandex.ru' not in email or len(password) < 5:
+                clear_user_state()
+                return 'Некоректные данные, попробуйте снова привязать почту.'
+            try:
+                with smtplib.SMTP('smtp.yandex.ru', 587) as server:
+                    server.ehlo()
+                    server.starttls()  # Включаем защищенное соединение TLS
+                    server.login(email, password)
+                    server.quit()
+                    response_text = 'Ваша почта успешно привязана!'
+                    return response_text
+            except Exception as e:
+                response_text = f"Произошла ошибка при привязке акканута: {e}"
+                return response_text
+        return response_text
+
+
+
+
+def send_mail():
+
+    if 'email' not in user_state_update or "password" not in user_state_update:
+        return "Сначала привяжите вашу почту."
+
+    if "send_mail" not in session_state:
+        session_state['send_mail'] = {}
+
+    if 'send_email' not in session_state:
+        if 'recipient' not in session_state['send_mail']:
+            response_text = 'Кому вы хотите отправить письмо?'
+            session_state['send_mail']['recipient'] = 1
+            return response_text
+        elif session_state['send_mail']['recipient'] == 1:
+            session_state['send_mail']['recipient'] = data['request']["original_utterance"]
+            if 'subject' not in session_state['send_mail']:
+                response_text = f'Получатель: {data["request"]["original_utterance"]}, на какую тему хотите отправить письмо?'
+                session_state['send_mail']['subject'] = 1
+                return response_text
+            elif session_state['send_mail']['subject'] != 1 and 'body' in session_state['send_mail'] and session_state['send_mail']['body'] != 1:
+                response_text = f'Получатель: {data["request"]["original_utterance"]}, отправить письмо?'
+                return response_text
+            elif session_state['send_mail']['subject'] != 1 and 'body' in session_state['send_mail'] and session_state['send_mail']['body'] == 1:
+                return f'Получатель: {data["request"]["original_utterance"]}, какой текст нужно передать? '
+            elif session_state['send_mail']['subject'] == 1:
+                return f'Получатель: {data["request"]["original_utterance"]}, на какую тему хотите отправить письмо?'
+        elif session_state['send_mail']['subject'] == 1:
+            session_state['send_mail']['subject'] = data['request']["original_utterance"]
+            if 'body' not in session_state['send_mail']:
+                response_text = f'Тема: {data["request"]["original_utterance"]}, что нужно передать?'
+                session_state['send_mail']['body'] = 1
+                return response_text
+            elif session_state['send_mail']['body'] != 1:
+                response_text = f'Тема: {data["request"]["original_utterance"]}, Отправить письмо?'
+                return response_text
+            elif session_state['send_mail']['body'] == 1:
+                response_text = f'Тема: {data["request"]["original_utterance"]}, какой текст нужно передать?'
+                return response_text
+        elif session_state['send_mail']['body'] == 1:
+            session_state['send_mail']['body'] = data['request']["original_utterance"]
+            response_text = f'Текст: {data["request"]["original_utterance"]}, отправить письмо?'
+            session_state['send_mail']['send_letter'] = 1
+            return response_text
+        elif session_state['send_mail']['send_letter'] == 1:
+            if data['request']['command'].lower() in ["да", 'отправить письмо', 'да, отправить', 'отправляй', 'угу', 'можно', 'отправить']:
+                session_state['send_email'] = 1
+            else:
+                return "Извините я вас не поняла, перефразируйте пожалуйста."
+
+
+
+
+
+    if  'recipient' in session_state['send_mail'] and 'subject' in session_state['send_mail'] and 'body' in session_state['send_mail'] and session_state['send_email'] == 1:
+        recipient = session_state['send_mail']['recipient']
+        subject = session_state['send_mail']['subject']
+        body = session_state['send_mail']['body']
+        clear_session_state()
+        try:
+            send_email(recipient, subject, body)
+            response_text = f"Письмо успешно отправлено на {recipient}"
+            del session_state['send_mail']
+            del session_state['send_email']
+
+        except Exception as e:
+            response_text = f"Произошла ошибка при отправке письма: {e}"
+
+        return response_text
+    else:
+        return 'Произошла неизвестная ошибка'
+
+
+
+def send_email(to, subject, body):
+    msg = MIMEText(body.encode('utf-8'), _charset='UTF-8')
+    msg['Subject'] = Header(subject, 'utf-8')
+    msg['From'] = user_state_update['email']
+    msg['To'] = to
+
+    mailserver = smtplib.SMTP('smtp.yandex.ru', 587)
+    mailserver.ehlo()
+    mailserver.starttls()  # Включаем защищенное соединение TLS
+    mailserver.login(user_state_update['email'], user_state_update['password'])
+    mailserver.sendmail(user_state_update['email'], [to], msg.as_string())
+    mailserver.quit()
+
+    return True
+
+def change_mail(change):
+    # 1 вход
+    if change == "thema":
+       response_text = 'Хорошо, изменим тему. На какую тему хотите отправить письмо?'
+       session_state['change_mail'] = 'thema'
+       return response_text
+    if change == 'body':
+        response_text = 'Хорошо, изменим текст письма. Скажите, какой текст хотите передать?'
+        session_state['change_mail'] = 'body'
+        return response_text
+    if change == 'recipient':
+        response_text = 'Хорошо изменим получателя письма. Кому хотите отправить письмо?'
+        session_state['change_mail'] = 'recipient'
+        return response_text
+    # 2 вход
+    if change == 'change_thema':
+        session_state['send_mail']["subject"] = data['request']["original_utterance"]
+        del session_state['change_mail']
+        session_state['send_mail']['subject'] = 1
+        return send_mail()
+    if change == 'change_body':
+        session_state['send_mail']["body"] = data['request']["original_utterance"]
+        del session_state['change_mail']
+        session_state['send_mail']['body'] = 1
+        return send_mail()
+    if change == 'change_recipient':
+        session_state['send_mail']["recipient"] = data['request']["original_utterance"]
+        del session_state['change_mail']
+        session_state['send_mail']['recipient'] = 1
+        return send_mail()
+
+
+
+
+def unknown_command():
+    response_text = "Я не понял вашу команду. Попробуйте еще раз."
+    return response_text
+
+
+if __name__ == '__main__':
+    app.run('0.0.0.0', port = 5000 ,debug=True)
