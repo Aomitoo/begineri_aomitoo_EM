@@ -3,6 +3,7 @@
 ## [![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=F747E4&background=FFFFFF00&repeat=false&width=435&lines=%D0%9E%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D0%B5)](https://git.io/typing-svg)
 Этот проект позволяет отправлять электронные письма с помощью навыка Алисы, используя Яндекс Почту в качестве сервиса для отправки. Он предоставляет возможность пользователям легко отправлять письма другим адресатам.
 
+![alt text](http://url/to/img.png)
 
 ## [![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=F747E4&background=FFFFFF00&repeat=false&width=435&lines=%D0%9A%D0%B0%D0%BA+%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D1%8C+%D0%BD%D0%B0%D0%B2%D1%8B%D0%BA)](https://git.io/typing-svg)
 1. Скажите Алисе "Запустить навык Почтальон"
