@@ -5,6 +5,11 @@
 
 ![danielfrelancework_A_girl_with_brown_hair_is_walking_and_the_ph_2cf5b10b-1049-4088-ae03-fe6bb9b11f42](https://github.com/user-attachments/assets/1cfde1a8-d4fd-4e44-bc51-dfb29d1fdbe5)
 
+## [![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=F747E4&background=FFFFFF00&repeat=false&width=435&lines=%D0%90%D0%BA%D1%82%D1%83%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D1%81%D1%82%D1%8C)](https://git.io/typing-svg)
+В последние годы наблюдается значительный рост популярности голосовых технологий и умных устройств. Это связано с тем, что голосовые помощники, такие как Алиса от Яндекса, становятся неотъемлемой частью повседневной жизни пользователей, предлагая удобный и быстрый способ взаимодействия с цифровыми сервисами.
+Кроме того, удобство и экономия времени становятся все более важными для современных пользователей. В условиях быстрого темпа жизни многие предпочитают голосовые команды для выполнения задач, так как это позволяет освободить руки и сосредоточиться на других делах.
+Навык Алисы
+
 ## [![Typing SVG](https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=F747E4&background=FFFFFF00&repeat=false&width=435&lines=%D0%9A%D0%B0%D0%BA+%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D1%8C+%D0%BD%D0%B0%D0%B2%D1%8B%D0%BA)](https://git.io/typing-svg)
 1. Скажите Алисе "Запустить навык Почтальон"
 2. Выполните настройку почты. Инструкцию можно посмотреть сказав Алисе "Инструкция по настройке почты"
