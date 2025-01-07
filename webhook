@@ -1,17 +1,8 @@
-from flask import Flask, request
 from dialog_manager import dialog_manager
 
 
-
-app = Flask(__name__)
-
-
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    global data, user_state_update, session_state
-
-    data = request.get_json()
+def webhook(data, context):
+    
     user_state_update = data['state']['user']
     session_state = data['state']['session']
     
@@ -25,7 +16,3 @@ def webhook():
         }
 
     return response
-
-
-if __name__ == '__main__':
-    app.run('0.0.0.0', port=5000, debug=True)
