@@ -58,21 +58,24 @@ def name_mail(data, user_state_update, session_state, d):
                         f'Сохраняю?'
         session_state['name_mail']['ready'] = 1
         return response_text
+
     elif d == 2:
         if 'name_mail' in user_state_update and user_state_update['name_mail']:
             response_text = ''
             for key in user_state_update['name_mail']:
-                p = user_state_update['name_mail'][key]
-                response_text += f'{key} : {p} \n\n'
+                mail = user_state_update['name_mail'][key]
+                response_text += f'{key} : {mail} \n\n'
             response_text = response_text + '\n\n Если хотите что-то изменить скажите: удалить почту из списка'
             return response_text
         else: return 'У вас не сохраненно ни одной почты'
+
     elif d == 3 and 'dell_name_mail' not in session_state:
         if 'name_mail' in user_state_update and user_state_update['name_mail']:
             response_text = 'Назовите имя почты, которую хотите удалить'
             session_state['dell_name_mail'] = 1
             return response_text
         else: return 'У вас не сохраненно ни одной почты'
+
     elif d == 3 and 'dell_name_mail' in session_state:
         if user_message in user_state_update['name_mail'] :
             del user_state_update['name_mail'][user_message]
