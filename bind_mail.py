@@ -1,4 +1,4 @@
-from clear_user_state import clear_user_state
+from clear_session_state import clear_email
 import smtplib
 
 

@@ -6,22 +6,8 @@ from name_mail import name_mail
 from handle_request import handle_request
 
 
-def is_stop_command(user_message):
-    stop_commands = [
-        'нет',
-        'не отправляй',
-        'алиса остановись',
-        'остановись',
-        'алиса стоп',
-        'стоп',
-        'алиса назад',
-        'назад',
-        'алиса перестань',
-        'перестань',
-        'алиса сначала',
-        'сначала'
-    ]
-    return user_message.lower() in stop_commands
+def is_stop_command(intents):
+    return 'stop' in intents
 
 
 def get_send_mail_status(session_state):
@@ -46,13 +32,9 @@ def check_bind_email_status(session_state):
 
 
 def check_send_mail_status(status):
-    if 'send_letter' in status:
-        return True
-    for key in ['recipient', 'subject', 'body']:
-        if key in status and status[key] == 1:
-            return True
-    return False
-
+    for key in ['recipient', 'subject', 'body', 'send_letter']:
+        return key in status 
+        
 
 def check_keys_in_session_state(session_state, key_1=0, key_2=0):
     if key_1 == 0 or key_2 == 0:
@@ -64,9 +46,10 @@ def check_keys_in_session_state(session_state, key_1=0, key_2=0):
 # Обработчик
 def dialog_manager(data, user_state_update, session_state):
     user_message = data['request']['command'].lower()
+    intents = data['request']['nlu']['intents']
     
     # Обработка команд остановки
-    if is_stop_command(user_message):
+    if is_stop_command(intents):
         clear_session_state(session_state)
         return 'Ладно, чего изволите?'
 
@@ -77,10 +60,11 @@ def dialog_manager(data, user_state_update, session_state):
 
     # Чтение составленного письма
     keys_in_session_state = check_keys_in_session_state(session_state, 'send_mail', 'send_letter')
-    if keys_in_session_state and user_message in ['прочитать', 'прочти', 'что получилось']:
+    if keys_in_session_state and 'read_letter' in intents:
         return f'Получатель: {session_state["send_mail"]["recipient"]} \n\n' \
                f'Тема: {session_state["send_mail"]["subject"]} \n\n' \
-               f'Текст: {session_state["send_mail"]["body"]}'
+               f'Текст: {session_state["send_mail"]["body"]} \n\n' \
+               f'Нужно что то изменить или уже отправить письмо?'
 
     # Обработка изменений параметров письма
     change_mail_status = check_change_mail_status(session_state)
@@ -89,11 +73,11 @@ def dialog_manager(data, user_state_update, session_state):
         return change_mail(data, session_state, user_state_update, change_parametr)
 
     if 'send_mail' in session_state:
-        if user_message == 'изменить тему':
+        if 'change_thema' in intents:
             return change_mail(data, session_state, user_state_update, 'thema')
-        elif user_message == 'изменить текст':
+        elif 'change_body' in intents:
             return change_mail(data, session_state, user_state_update, 'body')
-        elif user_message == 'изменить получателя':
+        elif 'change_recipient' in intents:
             return change_mail(data, session_state, user_state_update, 'recipient')
 
     # Обработка привязки электронной почты

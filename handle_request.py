@@ -1,33 +1,38 @@
-from hello import hello
-from clear_user_state import clear_user_state
 from bind_mail import bind_mail
+from clear_email import clear_email
+from comands import comands
+from hello import hello
+from help import help
+from name_mail import name_mail
 from send_mail import send_mail
 from instruction import instruction
-from name_mail import name_mail
-from help import help
 from unknown_command import unknown_command
 
 
+
 def handle_request(data, user_state_update, session_state):
-    user_message = data['request']['command'].lower()
+    intents = data['request']['nlu']['intents']
+    user_message = data['request']['command']
 
     if user_message == "":
         return hello()
-    if user_message == "очистить данные почты":
-        return clear_user_state(user_state_update)
-    if user_message == 'привязать почту':
+    if 'clear_email' in intents:
+        return clear_email(user_state_update)
+    if 'bind_mail' in intents:
         return bind_mail(data, user_state_update, session_state)
-    if user_message == 'отправить письмо':
+    if 'send_mail' in intents:
         return send_mail(data, user_state_update, session_state)
-    if user_message == 'инструкция по настройке почты':
+    if 'instruction' in intents:
         return instruction()
-    if user_message in ['сохранить почту', 'записать почту', 'запомнить почту']:
+    if 'name_mail' in intents:
         return name_mail(data, user_state_update, session_state, 1)
-    if user_message in ["покажи список сохраненных почт","прочти список почт", "покажи список почт", 'какие имена есть', 'какие почты я сохранил', 'какие имена я сохранил', 'покажи сохраненные почты', 'покажи сохраненные имена','покажи сохраненные адреса почт',"прочти список адресов почт", "покажи список адресов почт", 'какие адреса почт я сохранил', "список почт"]:
+    if 'list_name_mail' in intents:
         return name_mail(data, user_state_update, session_state, 2)
-    if user_message in ['удалить почту из сохранённых', 'удалить почту из списка сохранёных почт', 'удалить почту из списка', 'удалить почту']:
+    if 'delete_name_mail' in intents:
         return name_mail(data, user_state_update, session_state, 3)
-    if user_message in ['нужна помощь', 'помощь']:
+    if 'help' in intents:
         return help()
+    if 'comands' in intents:
+        return comands()
 
     return unknown_command()

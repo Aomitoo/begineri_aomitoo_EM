@@ -28,6 +28,7 @@ def check_keys_in_session_state(session_state, key_1=0, key_2=0):
 # Составление письма
 def send_mail(data, user_state_update, session_state):
     user_message = data['request']["original_utterance"]
+    intents = data['request']['nlu']['intents']
 
     if check_email_password(user_state_update):
         return "Вы пока что не можете отправлять письма так как вы ещё не привязали почту."
@@ -88,18 +89,11 @@ def send_mail(data, user_state_update, session_state):
             session_state['send_mail']['send_letter'] = 1
             return f'Текст: {user_message}. \n Если хотите прочесть весь состав письма, скажите прочти письмо. Если нужно что-то изменить скажите изменить получателя тему текст. \n\n' \
                    f'Я могу отправлять ваше письмо?'
-        
-        elif session_state['send_mail']['send_letter'] == 1:
-            if data['request']['command'].lower() in ['прочти', 'прочти письмо', 'прочти что получилось']:
-                return f'Получатель: {session_state['send_mail']['recipient']} \n\n' \
-                       f'Тема: {session_state['send_mail']['subject']} \n\n' \
-                       f'Текст: {session_state['send_mail']['body']} \n\n' \
-                       f'Отправить письмо?'
 
-            if data['request']['command'].lower() in ["да", 'отправить письмо', 'да, отправить', 'отправляй', 'угу', 'можно', 'отправить']:
-                session_state['send_email'] = 1
-            else:
-                return "Извините я вас не поняла, перефразируйте пожалуйста."
+        if 'send_mail_yes' in intents:
+            session_state['send_email'] = 1
+        else:
+            return "Извините я вас не поняла, перефразируйте пожалуйста."
     
     if check_send_mail_ready(session_state):
 
