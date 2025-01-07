@@ -39,7 +39,7 @@ def check_change_mail_status(session_state):
 
 def check_bind_email_status(session_state):
     if 'bind_email' in session_state:
-        for key in ['email', 'password']:
+        for key in ['email_input', 'password_input']:
             if key in session_state['bind_email']:
                 return True
     return False
@@ -67,7 +67,8 @@ def dialog_manager(data, user_state_update, session_state):
     
     # Обработка команд остановки
     if is_stop_command(user_message):
-        return clear_session_state(session_state)
+        clear_session_state(session_state)
+        return 'Ладно, чего изволите?'
 
     # Обработка отправки письма без темы
     if check_keys_in_session_state(session_state, 'send_mail', 'subject') and session_state['send_mail']['subject'] == 1 and user_message in ['без темы', 'без']:
