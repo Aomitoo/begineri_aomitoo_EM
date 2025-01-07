@@ -19,13 +19,13 @@ def bind_mail(data, user_state_update, session_state):
                 return f'Аккаунт уже привязан: email: {user_state_update["email"]},' \
                        f'если имеются какие-то проблемы с данными почты, скажите "Очистить данные почты",' \
                        f'а после заново привяжите почту'
-            session_state['bind_email']['password_input'] = None
+
+            del session_state['bind_email']
             user_state_update['password'] = data['request']["original_utterance"]
             email = user_state_update['email']
             password = user_state_update['password']
 
             if len(email) < 9 or '@yandex.ru' not in email or len(password) < 5:
-                clear_user_state()
                 return 'Данные некорректны, попробуйте снова привязать почту, удостоверившись, что все данные введены правильно и не содержат ошибок.'
             try:
                 with smtplib.SMTP('smtp.yandex.ru', 587) as server:
