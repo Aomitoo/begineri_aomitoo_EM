@@ -90,6 +90,12 @@ def send_mail(data, user_state_update, session_state):
                    f'Я могу отправлять ваше письмо?'
         
         elif session_state['send_mail']['send_letter'] == 1:
+            if data['request']['command'].lower() in ['прочти', 'прочти письмо', 'прочти что получилось']:
+                return f'Получатель: {session_state['send_mail']['recipient']} \n\n' \
+                       f'Тема: {session_state['send_mail']['subject']} \n\n' \
+                       f'Текст: {session_state['send_mail']['body']} \n\n' \
+                       f'Отправить письмо?'
+
             if data['request']['command'].lower() in ["да", 'отправить письмо', 'да, отправить', 'отправляй', 'угу', 'можно', 'отправить']:
                 session_state['send_email'] = 1
             else:
@@ -109,7 +115,8 @@ def send_mail(data, user_state_update, session_state):
             response_text = f"Письмо успешно отправлено на {recipient}"
         except Exception as e:
             return f"Произошла ошибка при отправке письма: {e}, убедитесь, что введенные данные корректны и попробуйте снова"
-
+        del session_state["send_mail"]
+        del session_state["send_email"]
         return response_text
 
     return "Произошла неизвестная ошибка"
